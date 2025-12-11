@@ -53,8 +53,8 @@ const loan = async () => {
   // Loan Table Rows
   const loanRows = (loans || []).length
     ? loans
-        .map(
-          (l) => `
+      .map(
+        (l) => `
       <tr class="hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer">
         <td class="px-2 py-1 text-xs">${l.amount}</td>
         <td class="px-2 py-1 text-xs">${l.interest_rate}%</td>
@@ -64,8 +64,8 @@ const loan = async () => {
         <td class="px-2 py-1 text-xs">${l.repaid_amount || 0}</td>
       </tr>
     `
-        )
-        .join("")
+      )
+      .join("")
     : `<tr><td colspan="6" class="text-center text-gray-400 dark:text-gray-500 py-2 text-xs">No loan requests yet.</td></tr>`;
 
   function pageEvents() {
