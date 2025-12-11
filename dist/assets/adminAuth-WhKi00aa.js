@@ -1,0 +1,1 @@
+const r="admin@assurancebank.cc",t="12345AD@";function i(n,e){return n===r&&e===t?(sessionStorage.setItem("admin_logged_in","true"),!0):!1}function o(){return sessionStorage.getItem("admin_logged_in")==="true"?!0:(window.location.href="/admin-login",!1)}export{i as l,o as r};
