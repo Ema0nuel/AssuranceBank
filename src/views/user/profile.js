@@ -6,7 +6,7 @@ import { reset } from "../../utils/reset"
 import User from "/src/images/user/user.png"
 
 
-const ADMIN_EMAIL = "assurancebank@gmail.com";
+const ADMIN_EMAIL = "assurancebankcc@gmail.com";
 
 const profile = async () => {
     reset("Profile")
@@ -268,6 +268,7 @@ const profile = async () => {
 };
 
 export default profile;
+
 
 
 

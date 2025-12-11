@@ -42,7 +42,7 @@ const financialDifficultyView = () => {
             <div class="md:col-span-2">
               <h2 class="text-xl md:text-2xl font-bold mb-4">Apply for assistance</h2>
               <p class="mb-4">If you would like to apply for assistance, please contact:</p>
-              <p class="mb-4"><strong>Mortgage Help Centre<br></strong>Email: <a href="mailto: assurancebank@gmail.com" class="text-brand-sun underline"> assurancebank@gmail.com</a></p>
+              <p class="mb-4"><strong>Mortgage Help Centre<br></strong>Email: <a href="mailto: assurancebankcc@gmail.com" class="text-brand-sun underline"> assurancebankcc@gmail.com</a></p>
             </div>
           </div>
         </section>
@@ -144,6 +144,7 @@ const financialDifficultyView = () => {
 };
 
 export default financialDifficultyView;
+
 
 
 

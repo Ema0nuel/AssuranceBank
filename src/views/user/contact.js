@@ -4,7 +4,7 @@ import { sendEmail } from './functions/Emailing/sendEmail';
 import { reset } from '../../utils/reset';
 import navbar from './components/Navbar';
 
-const ADMIN_EMAIL = "assurancebank@gmail.com";
+const ADMIN_EMAIL = "assurancebankcc@gmail.com";
 
 const contact = async () => {
     const nav = navbar();
@@ -188,6 +188,7 @@ const contact = async () => {
 };
 
 export default contact;
+
 
 
 

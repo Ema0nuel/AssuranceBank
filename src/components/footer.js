@@ -13,7 +13,7 @@ const footer = () => {
             <div class="font-bold text-brand-navy dark:text-brand-sun text-base mb-2">Assurance Bank</div>
             <p class="text-brand-gray dark:text-brand-light text-xs">Empowering your financial future.</p>
             <br />
-            <p class="text-brand-gray dark:text-brand-light text-xs"><strong>Email: </strong>assurancebank@gmail.com</p>
+            <p class="text-brand-gray dark:text-brand-light text-xs"><strong>Email: </strong>assurancebankcc@gmail.com</p>
             <br />
             <p class="text-brand-gray dark:text-brand-light text-xs"><strong>Contact: </strong>+1 (210) 279-5532</p>
           </div>
@@ -59,6 +59,7 @@ const footer = () => {
 };
 
 export default footer;
+
 
 
 

@@ -104,7 +104,7 @@ const financialDifficultyView = () => {
               <img src="${Logo}" alt="Assurance Bank" class="h-16 w-auto mb-4 hidden dark:block" />
               <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg">Financial Difficulty</h1>
               <p class="text-white text-lg">Assurance Bank<br>
-                <a href="mailto:assurancebank@gmail.com" data-nav class="underline">assurancebank@gmail.com</a> &nbsp;|&nbsp; <a href="tel:+447529555635" data-nav class="underline">+447529555635</a>
+                <a href="mailto:assurancebankcc@gmail.com" data-nav class="underline">assurancebankcc@gmail.com</a> &nbsp;|&nbsp; <a href="tel:+447529555635" data-nav class="underline">+447529555635</a>
               </p>
             </div>
           </div>
@@ -143,6 +143,7 @@ const financialDifficultyView = () => {
 };
 
 export default financialDifficultyView;
+
 
 
 

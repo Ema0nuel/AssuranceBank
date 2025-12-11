@@ -44,7 +44,7 @@ const financialAbuseView = () => {
               <p class="mb-4">We have also established a specialised team who can help you, or your authorised representative, regain control of your finances. Our staff will protect your confidentiality and safety at all times.</p>
               <ul class="list-disc pl-6 mb-4">
                 <li>Visit – any of our branches</li>
-                <li>Email – <a href="mailto:assurancebank@gmail.com" class="text-brand-sun underline">assurancebank@gmail.com</a> between 8.30am and 5.00pm, Mon-Fri</li>
+                <li>Email – <a href="mailto:assurancebankcc@gmail.com" class="text-brand-sun underline">assurancebankcc@gmail.com</a> between 8.30am and 5.00pm, Mon-Fri</li>
                 <li>Or complete our online form</li>
               </ul>
             </div>
@@ -145,6 +145,7 @@ const financialAbuseView = () => {
 };
 
 export default financialAbuseView;
+
 
 
 

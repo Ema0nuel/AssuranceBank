@@ -6,7 +6,7 @@ const branches = [
   {
     name: "Assurance Bank",
     address: "36 Main Street<br>Box Hill VIC 3128",
-    email: "assurancebank@gmail.com"
+    email: "assurancebankcc@gmail.com"
   },
   {
     name: "ATM iStandard GroupMarketplace",
@@ -80,6 +80,7 @@ const locateUs = async () => {
 };
 
 export default locateUs;
+
 
 
 

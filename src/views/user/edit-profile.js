@@ -5,7 +5,7 @@ import { reset } from '../../utils/reset';
 import navbar from './components/Navbar';
 import User from "/src/images/user/user.png";
 
-const ADMIN_EMAIL = "assurancebank@gmail.com";
+const ADMIN_EMAIL = "assurancebankcc@gmail.com";
 
 const editProfile = async () => {
     reset("Edit Profile");
@@ -475,6 +475,7 @@ const editProfile = async () => {
 };
 
 export default editProfile;
+
 
 
 

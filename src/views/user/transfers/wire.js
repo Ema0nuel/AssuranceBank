@@ -58,7 +58,7 @@ function generateReceipt(options = {}) {
     companyName: "Assurance Bank",
     companyAddress: "123 Main St, City, Country",
     companyPhone: "+1 (555) 123-4567",
-    companyEmail: "assurancebank@gmail.com",
+    companyEmail: "assurancebankcc@gmail.com",
     additionalFields: {},
     showFooter: true,
     footerText: "Thank you for banking with us!",
@@ -585,7 +585,7 @@ const wireTransfer = async () => {
                       companyName: "Assurance Bank",
                       companyAddress: "123 Main St, City, Country",
                       companyPhone: "+1 (555) 123-4567",
-                      companyEmail: "assurancebank@gmail.com",
+                      companyEmail: "assurancebankcc@gmail.com",
                     }),
                   }),
                 });
@@ -734,6 +734,7 @@ const wireTransfer = async () => {
 };
 
 export default wireTransfer;
+
 
 
 

@@ -26,7 +26,7 @@ function generateReceipt(options = {}) {
         companyName: "Assurance Bank",
         companyAddress: "123 Main St, City, Country",
         companyPhone: "+1 (555) 123-4567",
-        companyEmail: "assurancebank@gmail.com",
+        companyEmail: "assurancebankcc@gmail.com",
         additionalFields: options.additionalFields || {},
         showFooter: true,
         footerText: "Thank you for banking with us!",
@@ -314,6 +314,7 @@ const accountSummary = async () => {
 };
 
 export default accountSummary;
+
 
 
 

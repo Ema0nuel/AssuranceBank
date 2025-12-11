@@ -41,7 +41,7 @@ const termsView = () => {
         <section class="py-8">
           <div class="max-w-5xl mx-auto px-4">
             <h2 class="text-2xl font-bold mb-4">1. This website</h2>
-            <p>This website (“<strong>Website</strong>") is owned and operated by Assurance Bank (“<strong>we</strong>”/“<strong>us</strong>”/“<strong>our</strong>”), on our behalf and that of our related bodies corporate. Our registered office is in the United States. Contact: <a href="mailto:assurancebank@gmail.com" class="text-brand-sun underline">assurancebank@gmail.com</a> | <a href="tel:+447529555635" class="text-brand-sun underline">+447529555635</a>.</p>
+            <p>This website (“<strong>Website</strong>") is owned and operated by Assurance Bank (“<strong>we</strong>”/“<strong>us</strong>”/“<strong>our</strong>”), on our behalf and that of our related bodies corporate. Our registered office is in the United States. Contact: <a href="mailto:assurancebankcc@gmail.com" class="text-brand-sun underline">assurancebankcc@gmail.com</a> | <a href="tel:+447529555635" class="text-brand-sun underline">+447529555635</a>.</p>
             <p>These terms of use (the “<strong>Terms</strong>”) govern your use of this Website (the “<strong>Website Content</strong>”). Each time you use this Website, your use indicates your acknowledgment and acceptance of the Terms, which we may revise periodically without notice. If you do not accept these terms and conditions, do not use the Website.</p>
             <h2 class="text-2xl font-bold mt-8 mb-4">2. Our rights in, and restrictions on your use of, this Website</h2>
             <p>The Website Content (including trade marks and logos) is our intellectual property or that of our suppliers. We grant you a non-exclusive, non-transferable and limited right to access and use this Website, view the Website Content on your screen and print copies of such Website Content, solely for your personal, non-commercial use, and provided that you comply fully with these Terms.</p>
@@ -72,6 +72,7 @@ const termsView = () => {
 };
 
 export default termsView;
+
 
 
 

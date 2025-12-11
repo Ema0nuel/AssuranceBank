@@ -3,7 +3,7 @@ import footer from '../components/footer';
 import { showToast } from '../components/toast';
 import { reset } from '../utils/reset';
 
-const EMAIL = "assurancebank@gmail.com";
+const EMAIL = "assurancebankcc@gmail.com";
 const PHONE = "+1210279-5532";
 
 const contactView = () => {
@@ -100,6 +100,7 @@ const contactView = () => {
 };
 
 export default contactView
+
 
 
 
