@@ -26,8 +26,3 @@ export function adminLogout() {
   sessionStorage.removeItem("admin_logged_in");
   window.location.href = "/admin-login";
 }
-
-
-
-
-

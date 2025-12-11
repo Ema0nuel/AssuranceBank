@@ -19,7 +19,7 @@ export default async function handler(req, res) {
 
   try {
     const result = await resend.emails.send({
-      from: 'Assurance Bank <support@assurancebank.com>',
+      from: 'Assurance Bank <support@assurancebank.cc>',
       to,
       subject,
       html,
@@ -30,8 +30,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
-
-
-
-
-

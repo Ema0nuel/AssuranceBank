@@ -39,7 +39,7 @@ const forgotPassword = () => {
         startLogoSpinner();
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           // Update the redirectTo URL to point to reset-password
-          redirectTo: 'https://assurancebank.com/reset-password'
+          redirectTo: 'https://assurancebank.cc/reset-password'
         });
         endLogoSpinner();
 
@@ -95,6 +95,7 @@ const forgotPassword = () => {
 };
 
 export default forgotPassword;
+
 
 
 

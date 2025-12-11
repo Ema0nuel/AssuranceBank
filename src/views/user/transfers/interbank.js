@@ -122,35 +122,35 @@ function generateReceipt(options = {}) {
           <span class="font-semibold">Amount:</span><span>${config.currency}${config.amount}</span>
         </div>
         ${parseFloat(config.fees) > 0
-            ? `<div class="flex justify-between text-sm mb-1">
+      ? `<div class="flex justify-between text-sm mb-1">
                   <span class="font-semibold">Fees:</span><span>${config.currency}${config.fees}</span>
                 </div>`
-            : ""
-        }
+      : ""
+    }
         <div class="flex justify-between text-base font-bold border-t border-gray-300 dark:border-gray-700 pt-2">
           <span>Total:</span><span>${config.currency}${config.totalAmount}</span>
         </div>
       </div>
       ${Object.keys(config.additionalFields).length > 0
-            ? `<div class="mb-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
+      ? `<div class="mb-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
                 ${Object.entries(config.additionalFields)
-                    .map(([key, value]) => `
+        .map(([key, value]) => `
                       <div class="flex justify-between text-xs mb-1">
                         <span class="font-semibold">${key}:</span><span>${value}</span>
                       </div>
                     `).join("")}
               </div>`
-            : ""
-        }
+      : ""
+    }
       ${config.showFooter
-            ? `<div class="text-center mt-4 pt-3 border-t-2 border-dashed border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+      ? `<div class="text-center mt-4 pt-3 border-t-2 border-dashed border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
                 <div>${config.footerText}</div>
                 <div class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
                   This is an Assurance Bank-generated receipt
                 </div>
               </div>`
-            : ""
-        }
+      : ""
+    }
     </div>
     `;
 }
@@ -291,10 +291,10 @@ const interbankTransfer = async () => {
   const fmt = (v) =>
     typeof v === "number"
       ? v.toLocaleString("en-US", {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 2,
-        })
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+      })
       : v || "$0.00";
 
   function pageEvents() {
@@ -461,25 +461,25 @@ const interbankTransfer = async () => {
             <button id="close-receipt-modal" class="absolute top-3 right-4 text-gray-400 hover:text-red-500 dark:hover:text-white text-2xl font-bold z-10" aria-label="Close">&times;</button>
             <div class="p-6">
               ${generateReceipt({
-                id: generateReceiptId(),
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString(),
-                amount: tx.amount,
-                currency: "$",
-                description: tx.desc,
-                senderName: tx.profile.full_name,
-                recipientName: tx.accountName,
-                accountNumber: tx.accountNum,
-                transactionType: "Inter-Bank Transfer",
-                status: "Pending",
-                referenceNumber: tx.accountNum,
-                fees: "0.00",
-                totalAmount: tx.amount,
-                additionalFields: {
-                  IP: tx.ipLoc.ip || "N/A",
-                  Location: `${tx.ipLoc.city || ""}, ${tx.ipLoc.region || ""}, ${tx.ipLoc.country_name || ""}`,
-                },
-              })}
+        id: generateReceiptId(),
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+        amount: tx.amount,
+        currency: "$",
+        description: tx.desc,
+        senderName: tx.profile.full_name,
+        recipientName: tx.accountName,
+        accountNumber: tx.accountNum,
+        transactionType: "Inter-Bank Transfer",
+        status: "Pending",
+        referenceNumber: tx.accountNum,
+        fees: "0.00",
+        totalAmount: tx.amount,
+        additionalFields: {
+          IP: tx.ipLoc.ip || "N/A",
+          Location: `${tx.ipLoc.city || ""}, ${tx.ipLoc.region || ""}, ${tx.ipLoc.country_name || ""}`,
+        },
+      })}
               <div class="mt-6 flex flex-col gap-2 justify-center">
                 <button id="complete-interbank-btn" class="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 transition font-semibold">
                   Complete Transaction
