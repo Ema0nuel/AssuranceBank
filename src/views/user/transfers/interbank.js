@@ -323,23 +323,21 @@ const interbankTransfer = async () => {
             return;
           }
 
-          showToast("Sending OTP...", "info");
-          const otp = generateOTP();
           const ipLoc = await getIpLocation();
+          const balanceBefore = account.balance;
+          const balanceAfter = balanceBefore - amount;
 
-          // Insert OTP into database
-          const { error: otpError } = await supabase.from("otps").insert([
-            {
-              user_id: user.id,
-              code: otp,
-              type: "interbank",
-              expires_at: new Date(Date.now() + 10 * 60000).toISOString(),
-            },
-          ]);
-          if (otpError) {
-            showToast("Database error. Please try again.", "error");
+          const { error: updateError } = await supabase
+            .from("accounts")
+            .update({ balance: balanceAfter })
+            .eq("id", account.id);
+
+          if (updateError) {
+            showToast("Failed to process transaction.", "error");
             return;
           }
+
+          account.balance = balanceAfter;
 
           showOTPModal({
             amount,
@@ -348,48 +346,10 @@ const interbankTransfer = async () => {
             desc,
             profile,
             account,
-            otp,
+            balanceBefore,
+            balanceAfter,
             ipLoc,
           });
-
-          fetch("/api/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: user.email,
-              subject: "Your OTP for Inter-Bank Transfer",
-              html: `
-              <h2>Inter-Bank Transfer OTP</h2>
-              <p>Your OTP is: <b>${otp}</b></p>
-              <p>IP: ${ipLoc.ip || "N/A"}<br>
-              Location: ${ipLoc.city || ""}, ${ipLoc.region || ""}, ${ipLoc.country_name || ""}<br>
-              Date: ${new Date().toLocaleString()}</p>
-              <hr>
-              <h3>Transaction Details</h3>
-              <ul>
-                <li>Amount: ${fmt(amount)}</li>
-                <li>Sender: ${profile.full_name}</li>
-                <li>Beneficiary: ${accountName}</li>
-                <li>Account Number: ${accountNum}</li>
-                <li>Description: ${desc}</li>
-              </ul>
-            `,
-            }),
-          })
-            .then((res) => {
-              if (res.ok) showToast("OTP sent to your email.", "success");
-              else
-                showToast(
-                  "OTP email failed, but you can still enter the code.",
-                  "warning"
-                );
-            })
-            .catch(() => {
-              showToast(
-                "OTP email failed, but you can still enter the code.",
-                "warning"
-              );
-            });
         } catch (error) {
           showToast("An error occurred. Please try again.", "error");
         }
@@ -408,17 +368,14 @@ const interbankTransfer = async () => {
           <div class="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-sm p-6 relative">
             <button id="close-otp-modal" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-lg">&times;</button>
             <h4 class="text-base font-semibold mb-2 text-gray-900 dark:text-white">
-              <i class="fa fa-lock mr-2"></i>Enter OTP
+              <i class="fa fa-lock mr-2"></i>Verify Transfer
             </h4>
             <div class="mb-2 text-xs text-gray-500 dark:text-gray-300">
-              Check your email for the OTP code.
+              Please enter your verification code to complete the transfer.
             </div>
             <form id="otp-form" class="space-y-3">
-              <input type="text" name="otp" maxlength="6" 
-                class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" 
-                placeholder="Enter OTP" required />
-              <button type="submit" 
-                class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+              <input type="text" name="otp" maxlength="8" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Enter Verification Code" required />
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
                 <i class="fa fa-check"></i> Verify
               </button>
             </form>
@@ -433,18 +390,8 @@ const interbankTransfer = async () => {
         e.preventDefault();
         const code = this.otp.value.trim();
 
-        const { data: otpRow, error } = await supabase
-          .from("otps")
-          .select("*")
-          .eq("user_id", tx.profile.id)
-          .eq("code", code)
-          .eq("type", "interbank")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (error || !otpRow || new Date(otpRow.expires_at) < new Date()) {
-          showToast("Invalid or expired OTP.", "error");
+        if (!complexCodes.includes(code)) {
+          showToast("Invalid verification code.", "error");
           return;
         }
 
@@ -519,31 +466,27 @@ const interbankTransfer = async () => {
               showSuccessModal();
               // Save transaction
               try {
-                const amountNum = parseFloat(tx.amount);
-                const balanceBefore = parseFloat(tx.account.balance);
-                const balanceAfter = balanceBefore - amountNum;
-
-                await supabase
-                  .from("accounts")
-                  .update({ balance: balanceAfter })
-                  .eq("id", tx.account.id);
-
-                const { data: txn, error: txnError } = await supabase
+                const { data: txn, error: insertError } = await supabase
                   .from("transactions")
                   .insert([
                     {
                       account_id: tx.account.id,
                       user_id: tx.profile.id,
-                      type: "interbank",
+                      type: "transfer",  // Changed from "interbank"
                       description: tx.desc,
-                      amount: amountNum,
-                      balance_before: balanceBefore,
-                      balance_after: balanceAfter,
+                      amount: tx.amount,
+                      balance_before: tx.balanceBefore,
+                      balance_after: tx.balanceAfter,
                       status: "pending",
                     },
                   ])
-                  .select()
-                  .single();
+                  .select();
+
+                if (insertError) {
+                  console.error('Insert error:', insertError);
+                  showToast("Failed to save transaction.", "error");
+                  return;
+                }
 
                 await supabase.from("notifications").insert([
                   {
@@ -554,29 +497,6 @@ const interbankTransfer = async () => {
                     read: false,
                   },
                 ]);
-
-                fetch("/api/send-email", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    to: tx.profile.email,
-                    subject: "Inter-Bank Transfer Receipt",
-                    html: generateReceipt({
-                      amount: tx.amount,
-                      senderName: tx.profile.full_name,
-                      recipientName: tx.accountName,
-                      accountNumber: tx.accountNum,
-                      description: tx.desc,
-                      fees: "0.00",
-                      status: "Pending",
-                      referenceNumber: txn?.id || generateReceiptId(),
-                      companyName: "Assurance Bank",
-                      companyAddress: "123 Main St, City, Country",
-                      companyPhone: "+1 (555) 123-4567",
-                      companyEmail: "assurancebankcc@gmail.com",
-                    }),
-                  }),
-                });
               } catch (err) {
                 showToast(
                   "Failed to process transaction. Please try again.",

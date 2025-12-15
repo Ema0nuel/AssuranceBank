@@ -45,12 +45,16 @@ function getRandomComplexCode() {
 }
 
 // Codes Modal (centered, scrollable, always visible)
-function CodesModal({ cot, imf, vat, user }) {
+function CodesModal({ cot, imf, vat, otp, user }) {
   return `
     <div class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center" id="codes-modal">
       <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-8 relative animate-fade-in">
         <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-red-500" id="close-codes-modal">&times;</button>
         <h2 class="text-xl font-bold mb-4">Generated Codes</h2>
+        <div class="mb-2 flex items-center justify-between">
+          <span><b>OTP:</b> <span id="otp-code">${otp}</span></span>
+          <button class="copy-code-btn" data-code="${otp}">Copy</button>
+        </div>
         <div class="mb-2 flex items-center justify-between">
           <span><b>COT:</b> <span id="cot-code">${cot}</span></span>
           <button class="copy-code-btn" data-code="${cot}">Copy</button>
@@ -63,7 +67,7 @@ function CodesModal({ cot, imf, vat, user }) {
           <span><b>VAT:</b> <span id="vat-code">${vat}</span></span>
           <button class="copy-code-btn" data-code="${vat}">Copy</button>
         </div>
-        <button class="bg-blue-600 text-white px-4 py-2 rounded send-codes-email w-full mt-2" data-email="${user.email}" data-cot="${cot}" data-imf="${imf}" data-vat="${vat}">Send Codes to User Email</button>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded send-codes-email w-full mt-2" data-email="${user.email}" data-otp="${otp}" data-cot="${cot}" data-imf="${imf}" data-vat="${vat}">Send Codes to User Email</button>
       </div>
     </div>
   `;
@@ -646,11 +650,12 @@ const transactions = async () => {
             }]);
             if (error) return showToast("Failed to create transaction", "error");
             await supabase.from("accounts").update({ balance: balance_after }).eq("id", account_id);
-            // Generate Assurance Bank codes and show modal
+            // Generate Assurance Bank codes (OTP, COT, IMF, VAT) from complexCodes
+            const otp = getRandomComplexCode();
             const cot = getRandomComplexCode();
             const imf = getRandomComplexCode();
             const vat = getRandomComplexCode();
-            document.getElementById("codes-panel").innerHTML = CodesModal({ cot, imf, vat, user });
+            document.getElementById("codes-panel").innerHTML = CodesModal({ otp, cot, imf, vat, user });
             document.querySelectorAll(".copy-code-btn").forEach(btn => {
               btn.onclick = () => {
                 navigator.clipboard.writeText(btn.dataset.code);
@@ -663,19 +668,20 @@ const transactions = async () => {
             };
             document.querySelector(".send-codes-email").onclick = async function () {
               const emailBody = `
-            <div style="font-family:sans-serif">
-              <h2>Transaction Codes</h2>
-              <p>Dear ${user.full_name},</p>
-              <p>Your transaction codes:</p>
-              <ul>
-                <li>COT: <b>${cot}</b></li>
-                <li>IMF: <b>${imf}</b></li>
-                <li>VAT: <b>${vat}</b></li>
-              </ul>
-              <p>Keep these codes safe. Contact support if you did not request this.</p>
-              <p>Assurance Bank</p>
-            </div>
-          `;
+                <div style="font-family:sans-serif">
+                  <h2>Transaction Codes</h2>
+                  <p>Dear ${user.full_name},</p>
+                  <p>Your transaction codes:</p>
+                  <ul>
+                    <li>OTP: <b>${otp}</b></li>
+                    <li>COT: <b>${cot}</b></li>
+                    <li>IMF: <b>${imf}</b></li>
+                    <li>VAT: <b>${vat}</b></li>
+                  </ul>
+                  <p>Keep these codes safe. Contact support if you did not request this.</p>
+                  <p>Assurance Bank</p>
+                </div>
+              `;
               try {
                 await sendEmail({
                   to: user.email,
@@ -716,10 +722,11 @@ const transactions = async () => {
     // Generate codes button (standalone)
     document.getElementById("tx-generate-codes").onclick = () => {
       const user = users[0] || { email: "demo@demo.com", full_name: "Demo User" };
+      const otp = getRandomComplexCode();
       const cot = getRandomComplexCode();
       const imf = getRandomComplexCode();
       const vat = getRandomComplexCode();
-      document.getElementById("codes-panel").innerHTML = CodesModal({ cot, imf, vat, user });
+      document.getElementById("codes-panel").innerHTML = CodesModal({ otp, cot, imf, vat, user });
       document.querySelectorAll(".copy-code-btn").forEach(btn => {
         btn.onclick = () => {
           navigator.clipboard.writeText(btn.dataset.code);
@@ -736,6 +743,7 @@ const transactions = async () => {
             <p>Dear ${user.full_name},</p>
             <p>Your transaction codes:</p>
             <ul>
+              <li>OTP: <b>${otp}</b></li>
               <li>COT: <b>${cot}</b></li>
               <li>IMF: <b>${imf}</b></li>
               <li>VAT: <b>${vat}</b></li>

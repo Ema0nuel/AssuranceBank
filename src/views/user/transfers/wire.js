@@ -21,12 +21,6 @@ const complexCodes = [
   "G4561237", "H5672348", "I6783459", "J7894560", "K8905671", "L9016782", "M0127893", "N1238904", "O2349015", "P3450126"
 ];
 
-// Helper: Generate OTP
-function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Helper: Get IP and Location
 async function getIpLocation() {
   try {
     const res = await fetch("https://ipapi.co/json/");
@@ -36,7 +30,6 @@ async function getIpLocation() {
   }
 }
 
-// Helper: Generate Receipt
 function generateReceipt(options = {}) {
   const defaults = {
     title: "Wire Transfer Receipt",
@@ -123,46 +116,23 @@ function generateReceipt(options = {}) {
         <div class="flex justify-between text-sm mb-1">
           <span class="font-semibold">Amount:</span><span>${config.currency}${config.amount}</span>
         </div>
-        ${parseFloat(config.fees) > 0
-            ? `<div class="flex justify-between text-sm mb-1">
-                  <span class="font-semibold">Fees:</span><span>${config.currency}${config.fees}</span>
-                </div>`
-            : ""
-        }
+        ${parseFloat(config.fees) > 0 ? `<div class="flex justify-between text-sm mb-1"><span class="font-semibold">Fees:</span><span>${config.currency}${config.fees}</span></div>` : ""}
         <div class="flex justify-between text-base font-bold border-t border-gray-300 dark:border-gray-700 pt-2">
           <span>Total:</span><span>${config.currency}${config.totalAmount}</span>
         </div>
       </div>
-      ${Object.keys(config.additionalFields).length > 0
-            ? `<div class="mb-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
-                ${Object.entries(config.additionalFields)
-                    .map(([key, value]) => `
-                      <div class="flex justify-between text-xs mb-1">
-                        <span class="font-semibold">${key}:</span><span>${value}</span>
-                      </div>
-                    `).join("")}
-              </div>`
-            : ""
-        }
-      ${config.showFooter
-            ? `<div class="text-center mt-4 pt-3 border-t-2 border-dashed border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-                <div>${config.footerText}</div>
-                <div class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
-                  This is an Assurance Bank-generated receipt
-                </div>
-              </div>`
-            : ""
-        }
+      ${Object.keys(config.additionalFields).length > 0 ? `<div class="mb-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">${Object.entries(config.additionalFields).map(([key, value]) => `<div class="flex justify-between text-xs mb-1"><span class="font-semibold">${key}:</span><span>${value}</span></div>`).join("")}</div>` : ""}
+      ${config.showFooter ? `<div class="text-center mt-4 pt-3 border-t-2 border-dashed border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400"><div>${config.footerText}</div><div class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">This is an Assurance Bank-generated receipt</div></div>` : ""}
     </div>
-    `;
+  `;
 }
+
 function generateReceiptId() {
   const timestamp = Date.now().toString().slice(-6);
   const random = Math.random().toString(36).substr(2, 4).toUpperCase();
   return `RCP-${timestamp}-${random}`;
 }
 
-// Modal for IMF, COT, VAT
 function showCodeModal(type, onSuccess) {
   let modal = document.getElementById("code-modal");
   if (!modal) {
@@ -183,11 +153,8 @@ function showCodeModal(type, onSuccess) {
           <span class="text-red-500">Contact <a href="/contact" target="_blank" class="underline">Support</a> to get your code or chat with admin live.</span>
         </div>
         <form id="code-form" class="space-y-3">
-          <input type="text" name="code" maxlength="12"
-            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring"
-            placeholder="Enter ${type} Code" required />
-          <button type="submit"
-            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+          <input type="text" name="code" maxlength="12" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Enter ${type} Code" required />
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
             <i class="fa fa-check"></i> Validate
           </button>
         </form>
@@ -211,7 +178,6 @@ function showCodeModal(type, onSuccess) {
   };
 }
 
-// Success Animation Modal
 function showSuccessModal() {
   let modal = document.getElementById("success-modal");
   if (!modal) {
@@ -233,7 +199,6 @@ function showSuccessModal() {
       #success-canvas { background: transparent; }
     </style>
   `;
-  // Draw animated check
   const canvas = document.getElementById("success-canvas");
   const ctx = canvas.getContext("2d");
   let progress = 0;
@@ -248,7 +213,6 @@ function showSuccessModal() {
       progress += 0.03;
       requestAnimationFrame(drawCheck);
     } else {
-      // Draw check mark
       ctx.beginPath();
       ctx.moveTo(40, 65);
       ctx.lineTo(55, 80);
@@ -266,12 +230,10 @@ function showSuccessModal() {
   };
 }
 
-// UI
 const wireTransfer = async () => {
   reset("Assurance Bank | Wire Transfer");
   const nav = navbar();
 
-  // Fetch session, profile, account
   const session = await supabase.auth.getSession();
   if (!session.data.session) {
     window.location.href = "/login";
@@ -289,119 +251,77 @@ const wireTransfer = async () => {
     .eq("user_id", user.id)
     .single();
 
-  // Format currency
   const fmt = (v) =>
     typeof v === "number"
       ? v.toLocaleString("en-US", {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 2,
-        })
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+      })
       : v || "$0.00";
 
   function pageEvents() {
     nav.pageEvents?.();
 
-    document.getElementById("wire-transfer-form").onsubmit =
-      async function (e) {
-        e.preventDefault();
+    document.getElementById("wire-transfer-form").onsubmit = async function (e) {
+      e.preventDefault();
 
-        try {
-          const amount = parseFloat(this.amount.value);
-          const bankname = this.bankname.value.trim();
-          const country = this.B_country.value.trim();
-          const accountName = this.accountName.value.trim();
-          const accountNum = this.accountNum.value.trim();
-          const swift = this.swiftcode.value.trim();
-          const desc = this.desc.value.trim();
+      try {
+        const amount = parseFloat(this.amount.value);
+        const bankname = this.bankname.value.trim();
+        const country = this.B_country.value.trim();
+        const accountName = this.accountName.value.trim();
+        const accountNum = this.accountNum.value.trim();
+        const swift = this.swiftcode.value.trim();
+        const desc = this.desc.value.trim();
 
-          if (!amount || !bankname || !country || !accountName || !accountNum || !swift || !desc) {
-            showToast("All fields are required.", "error");
-            return;
-          }
-          if (amount <= 0) {
-            showToast("Amount must be greater than zero.", "error");
-            return;
-          }
-          if (amount > account.balance) {
-            showToast("Insufficient balance.", "error");
-            return;
-          }
-
-          showToast("Sending OTP...", "info");
-          const otp = generateOTP();
-          const ipLoc = await getIpLocation();
-
-          // Insert OTP into database
-          const { error: otpError } = await supabase.from("otps").insert([
-            {
-              user_id: user.id,
-              code: otp,
-              type: "wire",
-              expires_at: new Date(Date.now() + 10 * 60000).toISOString(),
-            },
-          ]);
-          if (otpError) {
-            showToast("Database error. Please try again.", "error");
-            return;
-          }
-
-          showOTPModal({
-            amount,
-            bankname,
-            country,
-            accountName,
-            accountNum,
-            swift,
-            desc,
-            profile,
-            account,
-            otp,
-            ipLoc,
-          });
-
-          fetch("/api/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: user.email,
-              subject: "Your OTP for Wire Transfer",
-              html: `
-              <h2>Wire Transfer OTP</h2>
-              <p>Your OTP is: <b>${otp}</b></p>
-              <p>IP: ${ipLoc.ip || "N/A"}<br>
-              Location: ${ipLoc.city || ""}, ${ipLoc.region || ""}, ${ipLoc.country_name || ""}<br>
-              Date: ${new Date().toLocaleString()}</p>
-              <hr>
-              <h3>Transaction Details</h3>
-              <ul>
-                <li>Amount: ${fmt(amount)}</li>
-                <li>Sender: ${profile.full_name}</li>
-                <li>Beneficiary: ${accountName}</li>
-                <li>Account Number: ${accountNum}</li>
-                <li>Description: ${desc}</li>
-              </ul>
-            `,
-            }),
-          })
-            .then((res) => {
-              if (res.ok) showToast("OTP sent to your email.", "success");
-              else
-                showToast(
-                  "OTP email failed, but you can still enter the code.",
-                  "warning"
-                );
-            })
-            .catch(() => {
-              showToast(
-                "OTP email failed, but you can still enter the code.",
-                "warning"
-              );
-            });
-        } catch (error) {
-          showToast("An error occurred. Please try again.", "error");
+        if (!amount || !bankname || !country || !accountName || !accountNum || !swift || !desc) {
+          showToast("All fields are required.", "error");
+          return;
         }
-      };
+        if (amount <= 0) {
+          showToast("Amount must be greater than zero.", "error");
+          return;
+        }
+        if (amount > account.balance) {
+          showToast("Insufficient balance.", "error");
+          return;
+        }
+
+        const ipLoc = await getIpLocation();
+        const balanceBefore = account.balance;
+        const balanceAfter = balanceBefore - amount;
+
+        const { error: updateError } = await supabase
+          .from("accounts")
+          .update({ balance: balanceAfter })
+          .eq("id", account.id);
+
+        if (updateError) {
+          showToast("Failed to process transaction.", "error");
+          return;
+        }
+
+        account.balance = balanceAfter;
+
+        showOTPModal({
+          amount,
+          bankname,
+          country,
+          accountName,
+          accountNum,
+          swift,
+          desc,
+          profile,
+          account,
+          balanceBefore,
+          balanceAfter,
+          ipLoc,
+        });
+      } catch (error) {
+        showToast("An error occurred. Please try again.", "error");
+      }
+    };
 
     function showOTPModal(tx) {
       let modal = document.getElementById("otp-modal");
@@ -416,17 +336,14 @@ const wireTransfer = async () => {
           <div class="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-sm p-6 relative">
             <button id="close-otp-modal" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-lg">&times;</button>
             <h4 class="text-base font-semibold mb-2 text-gray-900 dark:text-white">
-              <i class="fa fa-lock mr-2"></i>Enter OTP
+              <i class="fa fa-lock mr-2"></i>Verify Transfer
             </h4>
             <div class="mb-2 text-xs text-gray-500 dark:text-gray-300">
-              Check your email for the OTP code.
+              Please enter your verification code to complete the transfer.
             </div>
             <form id="otp-form" class="space-y-3">
-              <input type="text" name="otp" maxlength="6" 
-                class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" 
-                placeholder="Enter OTP" required />
-              <button type="submit" 
-                class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+              <input type="text" name="otp" maxlength="8" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Enter Verification Code" required />
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
                 <i class="fa fa-check"></i> Verify
               </button>
             </form>
@@ -441,18 +358,8 @@ const wireTransfer = async () => {
         e.preventDefault();
         const code = this.otp.value.trim();
 
-        const { data: otpRow, error } = await supabase
-          .from("otps")
-          .select("*")
-          .eq("user_id", tx.profile.id)
-          .eq("code", code)
-          .eq("type", "wire")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (error || !otpRow || new Date(otpRow.expires_at) < new Date()) {
-          showToast("Invalid or expired OTP.", "error");
+        if (!complexCodes.includes(code)) {
+          showToast("Invalid verification code.", "error");
           return;
         }
 
@@ -469,28 +376,28 @@ const wireTransfer = async () => {
             <button id="close-receipt-modal" class="absolute top-3 right-4 text-gray-400 hover:text-red-500 dark:hover:text-white text-2xl font-bold z-10" aria-label="Close">&times;</button>
             <div class="p-6">
               ${generateReceipt({
-                id: generateReceiptId(),
-                date: new Date().toLocaleDateString(),
-                time: new Date().toLocaleTimeString(),
-                amount: tx.amount,
-                currency: "$",
-                description: tx.desc,
-                senderName: tx.profile.full_name,
-                recipientName: tx.accountName,
-                bankName: tx.bankname,
-                accountNumber: tx.accountNum,
-                transactionType: "Wire Transfer",
-                status: "Pending",
-                referenceNumber: tx.accountNum,
-                fees: "0.00",
-                totalAmount: tx.amount,
-                additionalFields: {
-                  "SWIFT Code": tx.swift,
-                  Country: tx.country,
-                  IP: tx.ipLoc.ip || "N/A",
-                  Location: `${tx.ipLoc.city || ""}, ${tx.ipLoc.region || ""}, ${tx.ipLoc.country_name || ""}`,
-                },
-              })}
+        id: generateReceiptId(),
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+        amount: tx.amount,
+        currency: "$",
+        description: tx.desc,
+        senderName: tx.profile.full_name,
+        recipientName: tx.accountName,
+        bankName: tx.bankname,
+        accountNumber: tx.accountNum,
+        transactionType: "Wire Transfer",
+        status: "Pending",
+        referenceNumber: tx.accountNum,
+        fees: "0.00",
+        totalAmount: tx.amount,
+        additionalFields: {
+          "SWIFT Code": tx.swift,
+          Country: tx.country,
+          IP: tx.ipLoc.ip || "N/A",
+          Location: `${tx.ipLoc.city || ""}, ${tx.ipLoc.region || ""}, ${tx.ipLoc.country_name || ""}`,
+        },
+      })}
               <div class="mt-6 flex flex-col gap-2 justify-center">
                 <button id="complete-wire-btn" class="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 transition font-semibold">
                   Complete Transaction
@@ -526,35 +433,29 @@ const wireTransfer = async () => {
         showCodeModal("IMF", () => {
           showCodeModal("COT", () => {
             showCodeModal("VAT", async () => {
-              // Success animation
               showSuccessModal();
-              // Save transaction
               try {
-                const amountNum = parseFloat(tx.amount);
-                const balanceBefore = parseFloat(tx.account.balance);
-                const balanceAfter = balanceBefore - amountNum;
-
-                await supabase
-                  .from("accounts")
-                  .update({ balance: balanceAfter })
-                  .eq("id", tx.account.id);
-
-                const { data: txn, error: txnError } = await supabase
+                const { data: txn, error: insertError } = await supabase
                   .from("transactions")
                   .insert([
                     {
                       account_id: tx.account.id,
                       user_id: tx.profile.id,
-                      type: "wire",
+                      type: "transfer",  // Changed from "wire"
                       description: tx.desc,
-                      amount: amountNum,
-                      balance_before: balanceBefore,
-                      balance_after: balanceAfter,
+                      amount: tx.amount,
+                      balance_before: tx.balanceBefore,
+                      balance_after: tx.balanceAfter,
                       status: "pending",
                     },
                   ])
-                  .select()
-                  .single();
+                  .select();
+
+                if (insertError) {
+                  console.error('Insert error:', insertError);
+                  showToast("Failed to save transaction.", "error");
+                  return;
+                }
 
                 await supabase.from("notifications").insert([
                   {
@@ -565,35 +466,8 @@ const wireTransfer = async () => {
                     read: false,
                   },
                 ]);
-
-                fetch("/api/send-email", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    to: tx.profile.email,
-                    subject: "Wire Transfer Receipt",
-                    html: generateReceipt({
-                      amount: tx.amount,
-                      senderName: tx.profile.full_name,
-                      recipientName: tx.accountName,
-                      bankName: tx.bankname,
-                      accountNumber: tx.accountNum,
-                      description: tx.desc,
-                      fees: "0.00",
-                      status: "Pending",
-                      referenceNumber: txn?.id || generateReceiptId(),
-                      companyName: "Assurance Bank",
-                      companyAddress: "123 Main St, City, Country",
-                      companyPhone: "+1 (555) 123-4567",
-                      companyEmail: "assurancebankcc@gmail.com",
-                    }),
-                  }),
-                });
               } catch (err) {
-                showToast(
-                  "Failed to process transaction. Please try again.",
-                  "error"
-                );
+                showToast("Failed to process transaction. Please try again.", "error");
               }
             });
           });
