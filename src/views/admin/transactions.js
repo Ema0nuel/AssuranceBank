@@ -816,6 +816,11 @@ const transactions = async () => {
           const approveBtn = document.querySelector("#tx-detail-panel .tx-approve");
           if (approveBtn) approveBtn.onclick = async () => {
             await supabase.from("transactions").update({ status: "completed" }).eq("id", txid);
+            // Add deposit amount to fiat balance
+            if (tx.type === "deposit") {
+              const newBalance = parseFloat(acc.balance) + parseFloat(tx.amount);
+              await supabase.from("accounts").update({ balance: newBalance }).eq("id", tx.account_id);
+            }
             showToast("Transaction approved", "success");
             render();
           };
@@ -838,7 +843,14 @@ const transactions = async () => {
       document.querySelectorAll('.tx-approve').forEach(btn => {
         btn.onclick = async () => {
           const txid = btn.getAttribute("data-txid");
+          const tx = txs.find(t => t.id === txid);
+          const acc = accounts.find(a => a.id === tx.account_id);
           await supabase.from("transactions").update({ status: "completed" }).eq("id", txid);
+          // Add deposit amount to fiat balance
+          if (tx.type === "deposit") {
+            const newBalance = parseFloat(acc.balance) + parseFloat(tx.amount);
+            await supabase.from("accounts").update({ balance: newBalance }).eq("id", tx.account_id);
+          }
           showToast("Transaction approved", "success");
           render();
         };
